@@ -114,16 +114,16 @@ function LearningStyleQuiz() {
         if (!scores) return null;
 
         const descriptions = [];
-        if (scores.visual_score > 5) {
+        if (scores.visual_score >= 3) {
             descriptions.push("你更擅长通过视觉学习...");
         }
-        if (scores.aural_score > 5) {
+        if (scores.aural_score >= 3) {
             descriptions.push("你更擅长通过语音学习...");
         }
-        if (scores.read_write_score > 5) {
+        if (scores.read_write_score >= 3) {
             descriptions.push("你更擅长通过阅读/写作学习...");
         }
-        if (scores.kinaesthetic_score > 5) {
+        if (scores.kinaesthetic_score >= 3) {
             descriptions.push("你更擅长通过动觉学习...");
         }
 
