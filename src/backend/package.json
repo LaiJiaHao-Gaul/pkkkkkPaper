@@ -1,0 +1,20 @@
+{
+    "name": "learning_chatbot_backend",
+    "version": "1.0.0",
+    "description": "Backend for learning chatbot",
+    "main": "app.js",
+    "scripts": {
+        "start": "node app.js"
+    },
+    "dependencies": {
+        "@tensorflow/tfjs": "^4.20.0",
+        "axios": "^1.7.4",
+        "bcrypt": "^5.1.1",
+        "cors": "^2.8.5",
+        "express": "^4.17.1",
+        "jsonwebtoken": "^8.5.1",
+        "mysql2": "^2.2.5",
+        "torch": "^0.2.7",
+        "transformers": "^3.1.0"
+    }
+}

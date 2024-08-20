@@ -1,0 +1,42 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+  
+  .App {
+    text-align: center;
+  }
+  
+  .App-header {
+    background-color: #282c34;
+    padding: 20px;
+    color: white;
+  }
+  
+  .App-header a {
+    color: #61dafb;
+    text-decoration: none;
+  }
+  
+  .Chatbot, .Questionnaire {
+    padding: 20px;
+  }
+  
+  .ProgressBar {
+    margin: 20px 0;
+    background: #f3f3f3;
+    border-radius: 5px;
+    overflow: hidden;
+  }
+  
+  .ProgressBar .progress {
+    height: 20px;
+    background: #4caf50;
+  }
+  
+  .ProgressBar .progress-text {
+    margin-top: 5px;
+  }
+  

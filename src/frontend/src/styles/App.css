@@ -1,0 +1,7 @@
+.App {
+    text-align: center;
+}
+
+input[type="text"], input[type="number"] {
+    margin: 5px;
+}
