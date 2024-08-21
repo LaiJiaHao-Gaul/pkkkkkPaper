@@ -13,6 +13,7 @@ app.use(express.json());
 
 app.use('/api', require('./routes/learningStyleRoutes'));
 app.use('/api/users', require('./routes/userRoutes'));
+app.use('/api/questions', require('./routes/gptRoutes'));
 
 app.post('/api/ask', async (req, res) => {
     const { question, user_id } = req.body;

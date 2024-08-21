@@ -11,11 +11,12 @@ function Chatbot() {
 
     const handleAskQuestion = async () => {
         const learningStyle = JSON.parse(localStorage.getItem('learningStyle'));
-        const result = await axios.post('http://localhost:8000/generate_response', {
+        const result = await axios.post('http://localhost:8000/api/questions/ask', {
             question: question,
-            learning_style: learningStyle
+            // learning_style: learningStyle
         });
-        setResponse(result.data.response);
+        // console.log('result', result);
+        setResponse(result.data.message);
     };
 
     return (

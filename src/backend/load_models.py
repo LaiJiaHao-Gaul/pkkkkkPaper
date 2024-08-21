@@ -11,12 +11,12 @@ app = Flask(__name__)
 # 设置模型路径
 # style_model_path = '/Users/coco/Downloads/learning_chatbot/models/model_Doc2Vec.h5'
 style_model_path = '../../models/model_Doc2Vec.h5'
-qa_model_dir = '../../models/qa_model'
+# qa_model_dir = '../../models/qa_model'
 
 # 加载模型
 style_model = tf.compat.v1.keras.models.load_model(style_model_path)
 print("学习风格模型已成功加载")
-qa_pipeline = pipeline('question-answering', model='gpt2')
+# qa_pipeline = pipeline('question-answering', model='gpt2')
 
 @app.route('/predict_style', methods=['POST'])
 def predict_style():
