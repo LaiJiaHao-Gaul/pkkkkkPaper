@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import ProgressBar from './ProgressBar'; // 引入进度条组件
 import { Link } from 'react-router-dom'; // 用于跳转主页的链接
-
 // 问题和选项数组
 const questions = [
     "You are helping someone who wants to go to your airport, town centre or railway station. You would:",
@@ -130,6 +129,10 @@ function LearningStyleQuiz() {
         return (
             <div>
                 <h3>你的学习风格：</h3>
+                <p>Visual: {scores.visual_score}</p>
+                <p>Aural: {scores.aural_score}</p>
+                <p>Read/Write: {scores.read_write_score}</p>
+                <p>Kinaesthetic: {scores.kinaesthetic_score}</p>
                 <ul>
                     {descriptions.map((desc, index) => (
                         <li key={index}>{desc}</li>
