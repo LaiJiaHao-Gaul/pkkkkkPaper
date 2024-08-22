@@ -11,12 +11,19 @@ function Chatbot() {
 
     const handleAskQuestion = async () => {
         const learningStyle = JSON.parse(localStorage.getItem('learningStyle'));
+        const token = localStorage.getItem('token');
+
         const result = await axios.post('http://localhost:8000/api/questions/ask', {
             question: question,
             // learning_style: learningStyle
-        });
-        // console.log('result', result);
-        setResponse(result.data.message);
+        },
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+        console.log('result', result);
+        setResponse(result.data.answers);
     };
 
     return (

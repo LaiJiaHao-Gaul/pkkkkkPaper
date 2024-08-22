@@ -1,7 +1,7 @@
 const db = require('../db/db');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-
+require('dotenv').config();
 exports.registerUser = async (req, res) => {
     try {
         const { username, password, email } = req.body;
@@ -39,9 +39,9 @@ exports.loginUser = async (req, res) => {
         if (!isMatch) {
             return res.status(400).send({ message: '用户名或密码错误' });
         }
-
+        // console.log('process.env.JWT_SECRET',process.env.JWT_SECRET)
         // 创建JWT令牌
-        const token = jwt.sign({ user_id: user[0].id }, 'your_jwt_secret', { expiresIn: '1h' });
+        const token = jwt.sign({ user_id: user[0].id }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
         res.status(200).send({ message: '登录成功', token ,username,});
     } catch (error) {

@@ -26,7 +26,7 @@ exports.saveLearningStyle = async (req, res) => {
     }
 };
 
-// 获取学习风格
+// 获取调查问卷学习风格
 exports.getLearningStyle = async (req, res) => {
     const { username } = req.params;
     let users = await db.query('SELECT id FROM Users WHERE username = ?', [username]);
@@ -35,3 +35,5 @@ exports.getLearningStyle = async (req, res) => {
     console.log('res.json(LearningStyles[0][0]):', LearningStyles[0][LearningStyles[0].length-1]);
     res.json(LearningStyles[0][LearningStyles[0].length-1]);
 };
+
+//获取总体学习风格

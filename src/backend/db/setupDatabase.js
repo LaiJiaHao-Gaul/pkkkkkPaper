@@ -42,8 +42,21 @@ async function setupDatabase() {
             kinaesthetic_avg_score FLOAT DEFAULT 0,  -- 新增字段
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
-         `;
-    
+
+        CREATE TABLE IF NOT EXISTS UserLearningStyles (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            user_id BIGINT UNSIGNED NOT NULL,
+            visual_score FLOAT DEFAULT 0,
+            auditory_score FLOAT DEFAULT 0,
+            kinesthetic_score FLOAT DEFAULT 0,
+            visual_adjustment_factor FLOAT DEFAULT 0.1,
+            auditory_adjustment_factor FLOAT DEFAULT 0.1,
+            kinesthetic_adjustment_factor FLOAT DEFAULT 0.1,
+            last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES Users(id)
+        );
+            `;
+
         await connection.query(sql);
         console.log('Database and tables created successfully');
     } catch (error) {

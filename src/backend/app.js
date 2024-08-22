@@ -42,8 +42,24 @@ app.post('/api/ask', async (req, res) => {
     }
 });
 
+app.post('/api/test/predict_style', async (req, res) => {
+    const question = req.body.question;
+
+    try {
+        // 模拟请求学习风格分类模型
+        const styleResponse = await axios.post('http://localhost:5001/predict_style', { question });
+        const currentStyleScores = styleResponse.data;
+        console.log('currentStyleScores===>',currentStyleScores)
+        res.json(currentStyleScores); // 返回分类模型的分数
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Failed to get style prediction from model.' });
+    }
+});
+
 function getUserStyleFromDb(user_id) {
     return new Promise((resolve, reject) => {
+        
         db.query('SELECT * FROM LearningStyles WHERE user_id = ?', [user_id], (err, results) => {
             if (err) reject(err);
             resolve(results[0]);
