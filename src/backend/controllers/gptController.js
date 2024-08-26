@@ -1,6 +1,6 @@
 const db = require('../db/db'); // 假设你已经配置好数据库连接
 const axios = require('axios');
-const {decodeJWT} = require('../utils/jwt');
+const { decodeJWT } = require('../utils/jwt');
 require('dotenv').config();
 
 
@@ -17,18 +17,46 @@ exports.postQuestion = async (req, res) => {
         //从req中取得token并使用decodeJWT解析
         const token = req.headers.authorization.split(' ')[1];
         const user = decodeJWT(token);
-        console.log('user',user)
+        console.log('user', user)
         // let users = await db.query('SELECT id FROM Users WHERE username = ?', [username]);
         let id = user.user_id;
         let LearningStyles = await db.query('SELECT visual_score, aural_score, read_write_score, kinaesthetic_score FROM LearningStyles WHERE user_id = ?', [id]);
-        console.log('LearningStyles===>', LearningStyles[0][LearningStyles[0].length-1])
+        console.log('LearningStyles===>', LearningStyles[0][LearningStyles[0].length - 1])
         console.log('currentStyleScores===>', currentStyleScores)
-        res.json({
-            user_id: id,
-            currentStyleScores: currentStyleScores,
-            LearningStyles: LearningStyles[0][LearningStyles[0].length-1],
-            answers:'答案',
-        }); // 返回分类模型的分数
+        const data = {
+            model: "llama3.1",
+            prompt: question
+        };
+
+        axios({
+            method: 'post',
+            url: 'http://localhost:11434/api/generate',
+            data: data,
+            responseType: 'stream'
+        })
+            .then(response => {
+                res.setHeader('Content-Type', 'application/json');
+                response.data.on('data', (chunk) => {
+                    console.log('Received chunk:', chunk.toString());
+                    res.write(chunk);
+
+                    // response.data.pipe(chunk.toString());
+                });
+
+                response.data.on('end', () => {
+                    res.end();
+                    console.log('No more data in response.');
+                });
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        // res.json({
+        //     user_id: id,
+        //     currentStyleScores: currentStyleScores,
+        //     LearningStyles: LearningStyles[0][LearningStyles[0].length - 1],
+        //     answers: '答案',
+        // }); // 返回分类模型的分数
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Failed to get style prediction from model.' });
