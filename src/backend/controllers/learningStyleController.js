@@ -1,22 +1,27 @@
 const db = require('../db/db'); // 假设你已经配置好数据库连接
+require('dotenv').config();
+const { decodeJWT } = require('../utils/jwt');
 
 // 保存学习风格
 exports.saveLearningStyle = async (req, res) => {
     try {
-        const { username, visual_score, aural_score, read_write_score, kinaesthetic_score, answers } = req.body;
+        let { visual_score, aural_score, read_write_score, kinaesthetic_score } = req.body;//从请求中获取学习风格数据
+        const token = req.headers.authorization.split(' ')[1];
 
-        // 查找 username 对应的 user_id
-        const [users] = await db.query('SELECT id FROM Users WHERE username = ?', [username]);
+        const user = decodeJWT(token);
 
-        if (users.length === 0) {
-            return res.status(404).send({ message: 'User not found' });
-        }
+        let id = user.user_id;
+        visual_score = read_write_score + visual_score;
 
-        const user_id = users[0].id;
-
-        // 保存学习风格数据
-        await db.query('INSERT INTO LearningStyles (user_id, visual_score, aural_score, read_write_score, kinaesthetic_score, answers) VALUES (?, ?, ?, ?, ?, ?)',
-            [user_id, visual_score, aural_score, read_write_score, kinaesthetic_score, JSON.stringify(answers)]
+        let total = visual_score + aural_score + kinaesthetic_score;
+        visual_score = visual_score / total;
+        aural_score = aural_score / total;
+        kinaesthetic_score = kinaesthetic_score / total;
+        await db.query('UPDATE UserInteractionWeights SET visual_weight = ?, auditory_weight = ?, kinesthetic_weight = ? WHERE user_id = ?',
+            [visual_score, aural_score, kinaesthetic_score, id]);
+            
+        await db.query('UPDATE Users SET finished_survey = TRUE WHERE id = ?;',
+            [user.user_id]
         );
 
         res.status(200).send({ message: 'Learning style saved successfully' });
@@ -26,14 +31,16 @@ exports.saveLearningStyle = async (req, res) => {
     }
 };
 
+
 // 获取调查问卷学习风格
 exports.getLearningStyle = async (req, res) => {
-    const { username } = req.params;
-    let users = await db.query('SELECT id FROM Users WHERE username = ?', [username]);
-    let id = users[0][0].id;
-    let LearningStyles = await db.query('SELECT visual_score, aural_score, read_write_score, kinaesthetic_score FROM LearningStyles WHERE user_id = ?', [id]);
-    console.log('res.json(LearningStyles[0][0]):', LearningStyles[0][LearningStyles[0].length-1]);
-    res.json(LearningStyles[0][LearningStyles[0].length-1]);
+    const token = req.headers.authorization.split(' ')[1];
+
+    const user = decodeJWT(token);
+    let id = user.user_id;
+    let LearningStyles = await db.query('SELECT visual_weight, auditory_weight, kinesthetic_weight FROM UserInteractionWeights WHERE user_id = ?', [id]);
+    console.log('res.json(LearningStyles[0][0]):', LearningStyles[0][0]);
+    res.json(LearningStyles[0][0]);
 };
 
 //获取总体学习风格

@@ -8,29 +8,48 @@ require('dotenv').config();
 exports.postQuestion = async (req, res) => {
     // res.json({ok:true})
 
-    const question = req.body.question;
+    const messages = req.body.messages;
+    const Questions = messages.filter(message => message.role === 'user');
+    const lastQuestions = Questions[Questions.length - 1];
+
 
     try {
         // 模拟请求学习风格分类模型
-        const styleResponse = await axios.post('http://localhost:5001/predict_style', { question });
+        const styleResponse = await axios.post('http://localhost:5001/predict_style', { lastQuestions });
         const currentStyleScores = styleResponse.data;//问题本身的风格分数
         //从req中取得token并使用decodeJWT解析
         const token = req.headers.authorization.split(' ')[1];
         const user = decodeJWT(token);
-        console.log('user', user)
-        // let users = await db.query('SELECT id FROM Users WHERE username = ?', [username]);
         let id = user.user_id;
-        let LearningStyles = await db.query('SELECT visual_score, aural_score, read_write_score, kinaesthetic_score FROM LearningStyles WHERE user_id = ?', [id]);
-        console.log('LearningStyles===>', LearningStyles[0][LearningStyles[0].length - 1])
+        //问卷权重
+        let history_weight = await db.query('SELECT visual_weight, auditory_weight, kinesthetic_weight FROM UserInteractionWeights WHERE user_id = ?', [id]);
+
+
+
+        console.log('history_weight===>', history_weight[0][history_weight[0].length - 1])
         console.log('currentStyleScores===>', currentStyleScores)
+        //插入交互记录
+        await insertUserInteraction(id, lastQuestions, currentStyleScores.Visual, currentStyleScores.Auditory, currentStyleScores.Kinesthetic)
+        let windowsInteractions = await get10Interactions(id);
+        console.log('windowsInteractions===>', windowsInteractions[0][0])
+        let { visual_weight, auditory_weight, kinesthetic_weight } = await getHistoryWeight(id);
+        console.log('visual_weight===>', visual_weight)
+        console.log('auditory_weight===>', auditory_weight)
+        console.log('kinesthetic_weight===>', kinesthetic_weight)
+
+        visual_weight = visual_weight * 0.7 + windowsInteractions[0][0].avg_visual_score * 0.3;
+        auditory_weight = auditory_weight * 0.7 + windowsInteractions[0][0].avg_aural_score * 0.3;
+        kinesthetic_weight = kinesthetic_weight * 0.7 + windowsInteractions[0][0].avg_kinaesthetic_score * 0.3;
+        updateUserInteractionWeight({ id, visual_score: visual_weight, aural_score: auditory_weight, kinaesthetic_score: kinesthetic_weight })
         const data = {
             model: "llama3.1",
-            prompt: question
+            // prompt: question
+            messages,
         };
 
         axios({
             method: 'post',
-            url: 'http://localhost:11434/api/generate',
+            url: 'http://localhost:11434/api/chat',
             data: data,
             responseType: 'stream'
         })
@@ -39,10 +58,7 @@ exports.postQuestion = async (req, res) => {
                 response.data.on('data', (chunk) => {
                     console.log('Received chunk:', chunk.toString());
                     res.write(chunk);
-
-                    // response.data.pipe(chunk.toString());
                 });
-
                 response.data.on('end', () => {
                     res.end();
                     console.log('No more data in response.');
@@ -51,68 +67,96 @@ exports.postQuestion = async (req, res) => {
             .catch(error => {
                 console.error('Error:', error);
             });
-        // res.json({
-        //     user_id: id,
-        //     currentStyleScores: currentStyleScores,
-        //     LearningStyles: LearningStyles[0][LearningStyles[0].length - 1],
-        //     answers: '答案',
-        // }); // 返回分类模型的分数
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Failed to get style prediction from model.' });
     }
 };
 
-
-
-function adjustAnswerBasedOnStyle(answer, finalStyleScores) {
-    // 调整答案逻辑
-    return answer; // 这是一个简化的例子
-}
-
-
-function calculateAverageInteractionScores(interactions) {
-    const scores = { V: 0, A: 0, K: 0 };
-    interactions.forEach(interaction => {
-        scores.V += interaction.visual_score;
-        scores.A += interaction.aural_score;
-        scores.K += interaction.kinaesthetic_score;
-    });
-    const count = interactions.length;
-    scores.V /= count;
-    scores.A /= count;
-    scores.K /= count;
-    return scores;
-}
-
-function calculateFinalStyleScores(userStyle, avgInteractionScores, currentStyleScores, chosenArm) {
-    // 引入不同的分数增量策略
-    const increments = [0.05, 0.1, 0.15];
-    const increment = increments[chosenArm]; // 根据选择的臂应用增量
-
-    return {
-        V: (userStyle.visual_score + avgInteractionScores.V + currentStyleScores.V + increment) / 3,
-        A: (userStyle.aural_score + avgInteractionScores.A + currentStyleScores.A + increment) / 3,
-        K: (userStyle.kinaesthetic_score + avgInteractionScores.K + currentStyleScores.K + increment) / 3,
+exports.postFeedback = async (req, res) => {
+    const { feedback, question, answer } = req.body;
+    const token = req.headers.authorization.split(' ')[1];
+    const user = decodeJWT(token);
+    console.log('feedback=>>>', feedback)
+    console.log('question=>>>', question)
+    console.log('answer=>>>', answer)
+    const data = {
+        model: "llama3.1",
+        prompt: question
+        // context:
     };
+
+    axios({
+        method: 'post',
+        url: 'http://localhost:11434/api/generate',
+        data: data,
+        responseType: 'stream'
+    })
+        .then(response => {
+            res.setHeader('Content-Type', 'application/json');
+            response.data.on('data', (chunk) => {
+                res.write(chunk);
+            });
+            response.data.on('end', () => {
+                res.end();
+                console.log('No more data in response.');
+            });
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+}
+
+//插入一条交互记录
+async function insertUserInteraction(userId, interaction, Visual, Auditory, Kinesthetic) {
+    var values = calculatePercentages([Visual, Auditory, Kinesthetic]);
+    console.log('values===>', values)
+    await db.query('INSERT INTO UserInteractions (user_id, interaction, visual_score, aural_score, kinaesthetic_score) VALUES (?, ?, ?, ?, ?)', [userId, interaction, ...values],
+        (error, results, fields) => {
+            if (error) {
+                return console.error(error.message);
+            }
+            console.log('Inserted Row Id:', results.insertId);
+        }
+    );
 }
 
 
-function getAllInteractions(user_id) {
-    return new Promise((resolve, reject) => {
-        db.query('SELECT interaction FROM UserInteractions WHERE user_id = ?', [user_id], (err, results) => {
-            if (err) reject(err);
-            resolve(results);
-        });
-    });
+async function updateUserInteractionWeight({ id, visual_score, aural_score, kinaesthetic_score }) {
+    await db.query('UPDATE UserInteractionWeights SET visual_weight = ?, auditory_weight = ?, kinesthetic_weight = ? WHERE user_id = ?',
+        [visual_score, aural_score, kinaesthetic_score, id]);
+};
+
+async function getHistoryWeight(id) {
+    const [rows] = await db.query(
+        `SELECT visual_weight, auditory_weight, kinesthetic_weight, interaction_time
+         FROM UserInteractionWeights
+         WHERE user_id = ?`, [id]
+    );
+    return rows[0];
 }
 
-function getUserStyleFromDb(user_id) {
-    return new Promise((resolve, reject) => {
-        
-        db.query('SELECT * FROM LearningStyles WHERE user_id = ?', [user_id], (err, results) => {
-            if (err) reject(err);
-            resolve(results[0]);
-        });
-    });
+
+function calculatePercentages(values) {
+    const total = values.reduce((sum, value) => sum + value, 0);
+    const percentages = values.map(value => value / total);
+    return percentages;
+}
+
+async function get10Interactions(id) {
+    const query = `
+    SELECT 
+        AVG(visual_score) AS avg_visual_score, 
+        AVG(aural_score) AS avg_aural_score, 
+        AVG(kinaesthetic_score) AS avg_kinaesthetic_score
+    FROM (
+        SELECT visual_score, aural_score, kinaesthetic_score
+        FROM UserInteractions
+        WHERE user_id = ?
+        ORDER BY created_at DESC
+        LIMIT 10
+    ) AS latest_interactions;
+`;
+    const result = await db.query(query, [id]);
+    return result;
 }

@@ -60,7 +60,7 @@ app.post('/api/test/predict_style', async (req, res) => {
 function getUserStyleFromDb(user_id) {
     return new Promise((resolve, reject) => {
         
-        db.query('SELECT * FROM LearningStyles WHERE user_id = ?', [user_id], (err, results) => {
+        db.query('SELECT * FROM UserInteractionWeights WHERE user_id = ?', [user_id], (err, results) => {
             if (err) reject(err);
             resolve(results[0]);
         });

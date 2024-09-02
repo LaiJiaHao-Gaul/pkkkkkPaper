@@ -17,6 +17,10 @@ exports.registerUser = async (req, res) => {
 
         // 将新用户插入数据库
         await db.query('INSERT INTO Users (username, password_hash, email) VALUES (?, ?, ?)', [username, hashedPassword, email]);
+        let data = await db.query('SELECT * FROM Users WHERE username = ?', [username]);
+        console.log('data===>',data[0][0].id)
+        let id = data[0][0].id;
+        await db.query('INSERT INTO UserInteractionWeights (user_id, visual_weight, auditory_weight, kinesthetic_weight) VALUES (?, ?, ?, ?)', [id, 0, 0, 0]);
 
         res.status(201).send({ message: '用户注册成功' });
     } catch (error) {

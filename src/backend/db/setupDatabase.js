@@ -19,40 +19,28 @@ async function setupDatabase() {
             id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
             username VARCHAR(255) UNIQUE NOT NULL,
             password_hash VARCHAR(255) NOT NULL,
-            email VARCHAR(255)
-        );
-    
-        CREATE TABLE IF NOT EXISTS LearningStyles (
-            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-            user_id BIGINT UNSIGNED REFERENCES Users(id),
-            visual_score FLOAT,
-            aural_score FLOAT,
-            read_write_score FLOAT,
-            kinaesthetic_score FLOAT,
-            answers JSON,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            email VARCHAR(255),
+            finished_survey BOOLEAN DEFAULT FALSE
         );
     
         CREATE TABLE IF NOT EXISTS UserInteractions (
             id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
             user_id BIGINT UNSIGNED REFERENCES Users(id),
             interaction TEXT,
-            visual_avg_score FLOAT DEFAULT 0,  -- 新增字段
-            aural_avg_score FLOAT DEFAULT 0,   -- 新增字段
-            kinaesthetic_avg_score FLOAT DEFAULT 0,  -- 新增字段
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            visual_score FLOAT DEFAULT 0,  
+            aural_score FLOAT DEFAULT 0,   
+            kinaesthetic_score FLOAT DEFAULT 0,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES Users(id)
         );
-
-        CREATE TABLE IF NOT EXISTS UserLearningStyles (
+        
+        CREATE TABLE IF NOT EXISTS UserInteractionWeights (
             id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-            user_id BIGINT UNSIGNED NOT NULL,
-            visual_score FLOAT DEFAULT 0,
-            auditory_score FLOAT DEFAULT 0,
-            kinesthetic_score FLOAT DEFAULT 0,
-            visual_adjustment_factor FLOAT DEFAULT 0.1,
-            auditory_adjustment_factor FLOAT DEFAULT 0.1,
-            kinesthetic_adjustment_factor FLOAT DEFAULT 0.1,
-            last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            user_id BIGINT UNSIGNED REFERENCES Users(id),
+            visual_weight FLOAT,
+            auditory_weight FLOAT,
+            kinesthetic_weight FLOAT,
+            interaction_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (user_id) REFERENCES Users(id)
         );
             `;
