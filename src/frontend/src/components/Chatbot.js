@@ -108,7 +108,7 @@ function Chatbot() {
     });
     setChatHistory(prev => [...prev, {
       "role": "user",
-      "content": question + ' ' + feedback
+      "content": question,
     }]);  // 提问时更新聊天历史
 
     // 检查响应是否是 ok
@@ -138,8 +138,8 @@ function Chatbot() {
           try {
             const parsed = JSON.parse(line);
             console.log('Parsed JSON:', parsed);
-            if (parsed.response) {
-              result += parsed.response; // 拼接response字段的值
+            if (parsed.message.content) {
+              result += parsed.message.content; // 拼接response字段的值
               setResponse(result);  // 更新 React 状态
             }
           } catch (e) {
@@ -165,9 +165,9 @@ function Chatbot() {
             <br />
             {chat.role === 'assistant' && (
               <div>
-                <button onClick={() => handleFeedback('i need more picture', chatHistory[index - 1].content, chat.content)}>more picture</button>
-                <button onClick={() => handleFeedback('i need more sound', chatHistory[index - 1].content, chat.content)}>more sound</button>
-                <button onClick={() => handleFeedback('i need more experiment', chatHistory[index - 1].content, chat.content)}>more experiment</button>
+                <button onClick={() => handleFeedback('Please provide me with more lectures content', chatHistory[index - 1].content, chat.content)}>Please provide me with more lectures content</button>
+                <button onClick={() => handleFeedback('Please provide me with more relevant articles/videos content', chatHistory[index - 1].content, chat.content)}>Please provide me with more relevant articles/videos content</button>
+                <button onClick={() => handleFeedback('Please provide me with more experimental procedures content', chatHistory[index - 1].content, chat.content)}>Please provide me with more experimental procedures content</button>
               </div>
             )}
           </div>

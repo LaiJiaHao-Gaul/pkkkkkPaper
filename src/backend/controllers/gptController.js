@@ -13,6 +13,7 @@ exports.postQuestion = async (req, res) => {
     const lastQuestions = Questions[Questions.length - 1].content;
     console.log('lastQuestions', lastQuestions);
 
+
     try {
         // 模拟请求学习风格分类模型
         const styleResponse = await axios.post('http://localhost:5001/predict_style', { question: lastQuestions });
@@ -30,17 +31,11 @@ exports.postQuestion = async (req, res) => {
         console.log('currentStyleScores===>', currentStyleScores)
         //插入交互记录
         await insertUserInteraction(id, lastQuestions, currentStyleScores.Visual, currentStyleScores.Auditory, currentStyleScores.Kinesthetic)
-        let windowsInteractions = await get10Interactions(id);
-        console.log('windowsInteractions===>', windowsInteractions[0][0])
-        let { visual_weight, auditory_weight, kinesthetic_weight } = await getHistoryWeight(id);
-        console.log('visual_weight===>', visual_weight)
-        console.log('auditory_weight===>', auditory_weight)
-        console.log('kinesthetic_weight===>', kinesthetic_weight)
-
-        visual_weight = visual_weight * 0.7 + windowsInteractions[0][0].avg_visual_score * 0.3;
-        auditory_weight = auditory_weight * 0.7 + windowsInteractions[0][0].avg_aural_score * 0.3;
-        kinesthetic_weight = kinesthetic_weight * 0.7 + windowsInteractions[0][0].avg_kinaesthetic_score * 0.3;
-        updateUserInteractionWeight({ id, visual_score: visual_weight, aural_score: auditory_weight, kinaesthetic_score: kinesthetic_weight })
+        let {visual_weight,auditory_weight,kinesthetic_weight} = await changeUserInteractionWeight(id);
+        Questions.unshift({
+            role: 'user',
+            content: `i am a ${visual_weight * 100}% visual learner, ${auditory_weight * 100}% auditory learner, ${kinesthetic_weight * 100}% kinesthetic learner,Please adjust the proportion of your responses according to my learning style`
+        })
         const data = {
             model: "llama3.1",
             // prompt: question
@@ -98,7 +93,20 @@ exports.postFeedback = async (req, res) => {
             }
         ]
     };
-
+    switch (feedback) {
+        case 'Please provide me with more lectures content':
+            insertUserInteraction(user.user_id, feedback, 1, 0, 0);
+            break;
+        case 'Please provide me with more relevant articles/videos content':
+            insertUserInteraction(user.user_id, feedback, 0, 1, 0);
+            break;
+        case 'Please provide me with more experimental procedures content':
+            insertUserInteraction(user.user_id, feedback, 0, 0, 1);
+            break;
+        default:
+            feedback = 0;
+    }
+    await changeUserInteractionWeight(user.user_id);
     axios({
         method: 'post',
         url: 'http://localhost:11434/api/chat',
@@ -118,6 +126,16 @@ exports.postFeedback = async (req, res) => {
         .catch(error => {
             console.error('Error:', error);
         });
+}
+
+async function changeUserInteractionWeight(id) {
+    let windowsInteractions = await get10Interactions(id);
+    let { visual_weight, auditory_weight, kinesthetic_weight } = await getHistoryWeight(id);
+    visual_weight = visual_weight * 0.7 + windowsInteractions[0][0].avg_visual_score * 0.3;
+    auditory_weight = auditory_weight * 0.7 + windowsInteractions[0][0].avg_aural_score * 0.3;
+    kinesthetic_weight = kinesthetic_weight * 0.7 + windowsInteractions[0][0].avg_kinaesthetic_score * 0.3;
+    await updateUserInteractionWeight({ id, visual_score: visual_weight, aural_score: auditory_weight, kinaesthetic_score: kinesthetic_weight })
+    return { visual_weight, auditory_weight, kinesthetic_weight }
 }
 
 //插入一条交互记录
