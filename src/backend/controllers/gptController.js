@@ -10,12 +10,12 @@ exports.postQuestion = async (req, res) => {
 
     const messages = req.body.messages;
     const Questions = messages.filter(message => message.role === 'user');
-    const lastQuestions = Questions[Questions.length - 1];
-
+    const lastQuestions = Questions[Questions.length - 1].content;
+    console.log('lastQuestions', lastQuestions);
 
     try {
         // 模拟请求学习风格分类模型
-        const styleResponse = await axios.post('http://localhost:5001/predict_style', { lastQuestions });
+        const styleResponse = await axios.post('http://localhost:5001/predict_style', { question: lastQuestions });
         const currentStyleScores = styleResponse.data;//问题本身的风格分数
         //从req中取得token并使用decodeJWT解析
         const token = req.headers.authorization.split(' ')[1];
@@ -74,7 +74,7 @@ exports.postQuestion = async (req, res) => {
 };
 
 exports.postFeedback = async (req, res) => {
-    const { feedback, question, answer } = req.body;
+    const { feedback, question, answer, chatHistory } = req.body;
     const token = req.headers.authorization.split(' ')[1];
     const user = decodeJWT(token);
     console.log('feedback=>>>', feedback)
@@ -82,13 +82,26 @@ exports.postFeedback = async (req, res) => {
     console.log('answer=>>>', answer)
     const data = {
         model: "llama3.1",
-        prompt: question
-        // context:
+        messages: [
+            ...chatHistory,
+            {
+                role: 'user',
+                content: question
+            },
+            {
+                role: 'assistant',
+                content: answer
+            },
+            {
+                role: 'user',
+                content: feedback
+            }
+        ]
     };
 
     axios({
         method: 'post',
-        url: 'http://localhost:11434/api/generate',
+        url: 'http://localhost:11434/api/chat',
         data: data,
         responseType: 'stream'
     })
