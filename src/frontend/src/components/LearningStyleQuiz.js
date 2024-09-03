@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import ProgressBar from './ProgressBar'; // 引入进度条组件
 import { Link } from 'react-router-dom'; // 用于跳转主页的链接
@@ -10,17 +10,41 @@ const questions = [
 ];
 
 const options = [
-    ["a. go with her,", "b. tell her the directions.", "c. write down the directions.", " d. draw, or give her a map."],
-    ["a.  see the words in your mind and choose by the way they look.", "b.  think about how each word sounds and choose one.", "c. find it in a dictionary.", "d. write both words on paper and choose one."],
+    ["a. go with her.", "b. tell her the directions.", "c. write down the directions.", "d. draw, or give her a map."],
+    ["a. see the words in your mind and choose by the way they look.", "b. think about how each word sounds and choose one.", "c. find it in a dictionary.", "d. write both words on paper and choose one."],
     ["a. describe some of the highlights.", "b. use a map or website to show them the places.", "c. give them a copy of the printed itinerary.", "d. phone, text or email them."],
+    ["a. cook something you know without the need for instructions.", "b. ask friends for suggestions.", "c. look through the cookbook for ideas from the pictures.", "d. use a cookbook where you know there is a good recipe."],
+    ["a. talk about, or arrange a talk for them about parks or nature reserves.", "b. show them internet pictures, photographs or picture books.", "c. take them to a park or nature reserve and walk with them.", "d. give them a book or pamphlets about the parks or nature reserves."],
+    ["a. Trying or testing it.", "b. Reading the details about its features.", "c. It is a modern design and looks good.", "d. The salesperson telling me about its features."],
+    ["a. watching a demonstration.", "b. listening to somebody explaining it and asking questions.", "c. diagrams and charts - visual clues.", "d. written instructions – e.g. a manual or textbook."],
+    ["a. gave you a web address or something to read about it.", "b. used a plastic model of a knee to show what was wrong.", "c. described what was wrong.", "d. showed you a diagram of what was wrong."],
+    ["a. read the written instructions that came with the programme.", "b. talk with people who know about the programme.", "c. use the controls or keyboard.", "d. follow the diagrams in the book that came with it."],
+    ["a. things I can click on, shift or try.", "b. interesting design and visual features.", "c. interesting written descriptions, lists and explanations.", "d. audio channels where I can hear music, radio programmes or interviews."],
+    ["a. The way it looks is appealing.", "b. Quickly reading parts of it.", "c. A friend talks about it and recommends it.", "d. It has real-life stories, experiences and examples."],
+    ["a. a chance to ask questions and talk about the camera and its features.", "b. clear written instructions with lists and bullet points about what to do.", "c. diagrams showing the camera and what each part does.", "d. many examples of good and poor photos and how to improve them."],
+    ["a. demonstrations, models or practical sessions.", "b. question and answer, talk, group discussion, or guest speakers.", "c. handouts, books, or readings.", "d. diagrams, charts or graphs."],
+    ["a. using examples from what you have done.", "b. using a written description of your results.", "c. from somebody who talks it through with you.", "d. using graphs showing what you had achieved."],
+    ["a. choose something that you have had there before.", "b. listen to the waiter or ask friends to recommend choices.", "c. choose from the descriptions in the menu.", "d. look at what others are eating or look at pictures of each dish."],
+    ["a. make diagrams or get graphs to help explain things.", "b. write a few key words and practice saying your speech over and over.", "c. write out your speech and learn from reading it over several times.", "d. gather many examples and stories to make the talk real and practical."]
 ];
-
 // 对应每个问题的评分规则
 const scoring = [
     { a: 'K', b: 'A', c: 'R', d: 'V' },
     { a: 'V', b: 'A', c: 'R', d: 'K' },
     { a: 'K', b: 'V', c: 'R', d: 'A' },
-    // 对应其他题目的评分规则继续添加...
+    { a: 'K', b: 'A', c: 'V', d: 'R' },
+    { a: 'A', b: 'V', c: 'K', d: 'R' },
+    { a: 'K', b: 'R', c: 'V', d: 'A' },
+    { a: 'K', b: 'A', c: 'V', d: 'R' },
+    { a: 'R', b: 'K', c: 'A', d: 'V' },
+    { a: 'R', b: 'A', c: 'K', d: 'V' },
+    { a: 'K', b: 'V', c: 'R', d: 'A' },
+    { a: 'V', b: 'R', c: 'A', d: 'K' },
+    { a: 'A', b: 'R', c: 'V', d: 'K' },
+    { a: 'K', b: 'A', c: 'R', d: 'V' },
+    { a: 'K', b: 'R', c: 'A', d: 'V' },
+    { a: 'K', b: 'A', c: 'R', d: 'V' },
+    { a: 'V', b: 'A', c: 'R', d: 'K' }
 ];
 
 function LearningStyleQuiz() {
@@ -28,7 +52,6 @@ function LearningStyleQuiz() {
     const [answers, setAnswers] = useState([]); // 存储用户的答案
     const [scores, setScores] = useState(null); // 存储计算后的学习风格分数
     const username = localStorage.getItem('username'); // 从 localStorage 获取 username
-
     if (!username) {
         console.error('No username found in localStorage');
         alert('Please log in before submitting the quiz');
@@ -64,7 +87,6 @@ function LearningStyleQuiz() {
 
         try {
             const result = await axios.post('http://localhost:8000/api/save_learning_style', {
-                username: username,
                 visual_score: newScores.V,
                 aural_score: newScores.A,
                 read_write_score: newScores.R,
@@ -129,10 +151,9 @@ function LearningStyleQuiz() {
         return (
             <div>
                 <h3>你的学习风格：</h3>
-                <p>Visual: {scores.visual_score}</p>
-                <p>Aural: {scores.aural_score}</p>
-                <p>Read/Write: {scores.read_write_score}</p>
-                <p>Kinaesthetic: {scores.kinaesthetic_score}</p>
+                <p>Visual: {scores.visual_weight}</p>
+                <p>Aural: {scores.auditory_weight}</p>
+                <p>Kinaesthetic: {scores.kinesthetic_weight}</p>
                 <ul>
                     {descriptions.map((desc, index) => (
                         <li key={index}>{desc}</li>
