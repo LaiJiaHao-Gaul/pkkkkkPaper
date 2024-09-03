@@ -31,7 +31,7 @@ exports.postQuestion = async (req, res) => {
         console.log('currentStyleScores===>', currentStyleScores)
         //插入交互记录
         await insertUserInteraction(id, lastQuestions, currentStyleScores.Visual, currentStyleScores.Auditory, currentStyleScores.Kinesthetic)
-        let {visual_weight,auditory_weight,kinesthetic_weight} = await changeUserInteractionWeight(id);
+        let { visual_weight, auditory_weight, kinesthetic_weight } = await changeUserInteractionWeight(id);
         Questions.unshift({
             role: 'user',
             content: `i am a ${visual_weight * 100}% visual learner, ${auditory_weight * 100}% auditory learner, ${kinesthetic_weight * 100}% kinesthetic learner,Please adjust the proportion of your responses according to my learning style`
@@ -51,7 +51,7 @@ exports.postQuestion = async (req, res) => {
             .then(response => {
                 res.setHeader('Content-Type', 'application/json');
                 response.data.on('data', (chunk) => {
-                    console.log('Received chunk:', chunk.toString());
+                    // console.log('Received chunk:', chunk.toString());
                     res.write(chunk);
                 });
                 response.data.on('end', () => {
@@ -128,13 +128,62 @@ exports.postFeedback = async (req, res) => {
         });
 }
 
+exports.getWeight = async (req, res) => {
+    try {
+        const token = req.headers.authorization.split(' ')[1];
+        const user = decodeJWT(token);
+        let id = user.user_id;
+        //限制十条
+
+        const [rows] = await db.query(
+            `SELECT visual_weight, auditory_weight, kinesthetic_weight, interaction_time
+             FROM UserInteractionWeights
+             WHERE user_id = ?
+             ORDER BY interaction_time DESC
+             LIMIT 10`, [id]
+        );
+        console.log('rows===>', rows)
+        let transformed = [];
+
+        // 遍历原始数据数组
+        rows.forEach(item => {
+            // 格式化时间，只保留日期部分
+            const date = new Date(item.interaction_time);
+            const month = (date.getMonth() + 1).toString().padStart(2, '0'); // 月份从0开始，所以加1
+            const day = date.getDate().toString().padStart(2, '0');
+            const formattedDate = `${month}-${day}`;
+
+            // 为每个权重类型创建一个新的对象，并加入到转换后的数组中
+            transformed.push({
+                time: date,
+                value: item.visual_weight,
+                category: 'visual_weight'
+            });
+            transformed.push({
+                time: date,
+                value: item.auditory_weight,
+                category: 'auditory_weight'
+            });
+            transformed.push({
+                time: date,
+                value: item.kinesthetic_weight,
+                category: 'kinesthetic_weight'
+            });
+        });
+        res.json({ weightList: transformed.reverse() });
+    }catch(err){
+        console.error(err);
+        res.status(500).json({ error: 'Something went wrong.' });
+    }
+    
+}
 async function changeUserInteractionWeight(id) {
     let windowsInteractions = await get10Interactions(id);
     let { visual_weight, auditory_weight, kinesthetic_weight } = await getHistoryWeight(id);
     visual_weight = visual_weight * 0.7 + windowsInteractions[0][0].avg_visual_score * 0.3;
     auditory_weight = auditory_weight * 0.7 + windowsInteractions[0][0].avg_aural_score * 0.3;
     kinesthetic_weight = kinesthetic_weight * 0.7 + windowsInteractions[0][0].avg_kinaesthetic_score * 0.3;
-    await updateUserInteractionWeight({ id, visual_score: visual_weight, aural_score: auditory_weight, kinaesthetic_score: kinesthetic_weight })
+    await addUserInteractionWeight({ id, visual_weight, auditory_weight, kinesthetic_weight })
     return { visual_weight, auditory_weight, kinesthetic_weight }
 }
 
@@ -152,17 +201,22 @@ async function insertUserInteraction(userId, interaction, Visual, Auditory, Kine
     );
 }
 
-
-async function updateUserInteractionWeight({ id, visual_score, aural_score, kinaesthetic_score }) {
-    await db.query('UPDATE UserInteractionWeights SET visual_weight = ?, auditory_weight = ?, kinesthetic_weight = ? WHERE user_id = ?',
-        [visual_score, aural_score, kinaesthetic_score, id]);
+async function addUserInteractionWeight({ id, visual_weight, auditory_weight, kinesthetic_weight }) {
+    await db.query(
+        `INSERT INTO UserInteractionWeights (user_id, visual_weight, auditory_weight, kinesthetic_weight)
+         VALUES (?, ?, ?, ?)`,
+        [id, visual_weight, auditory_weight, kinesthetic_weight]
+    );
 };
+
 
 async function getHistoryWeight(id) {
     const [rows] = await db.query(
         `SELECT visual_weight, auditory_weight, kinesthetic_weight, interaction_time
          FROM UserInteractionWeights
-         WHERE user_id = ?`, [id]
+         WHERE user_id = ?
+         ORDER BY interaction_time DESC
+         LIMIT 1`, [id]
     );
     return rows[0];
 }

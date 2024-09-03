@@ -6,6 +6,7 @@ import Login from './components/Login';
 import Register from './components/Register';
 import Navbar from './components/Navbar';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
 
 function App() {
@@ -26,7 +27,20 @@ function App() {
             });
         }
     }, []);
-
+    const handleRefreshUserInfo = () => {
+        const token = localStorage.getItem('token');
+        axios.get('http://localhost:8000/api/users/me', {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        }).then(response => {
+            console.log('response.data.user',response.data.user)
+            // navigate('/');  // 导航到根路径
+            setUser(response.data.user);
+        }).catch(() => {
+            localStorage.removeItem('token');
+        });
+    }
     const handleLogout = () => {
         setUser(null);
     };
@@ -38,8 +52,8 @@ function App() {
                 <main style={{ padding: '20px' }}>
                     <Routes>
                         <Route path="/" element={<Chatbot />} />
-                        <Route path="/quiz" element={<LearningStyleQuiz />} />
-                        <Route path="/login" element={<Login onLogin={setUser} />} />
+                        <Route path="/quiz" element={<LearningStyleQuiz onFinish={handleRefreshUserInfo}/>} />
+                        <Route path="/login" element={<Login onLogin={handleRefreshUserInfo} />} />
                         <Route path="/register" element={<Register />} />
                     </Routes>
                 </main>

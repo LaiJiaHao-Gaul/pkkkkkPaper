@@ -47,7 +47,7 @@ const scoring = [
     { a: 'V', b: 'A', c: 'R', d: 'K' }
 ];
 
-function LearningStyleQuiz() {
+function LearningStyleQuiz({onFinish}) {
     const [currentQuestion, setCurrentQuestion] = useState(0); // 当前显示的问题索引
     const [answers, setAnswers] = useState([]); // 存储用户的答案
     const [scores, setScores] = useState(null); // 存储计算后的学习风格分数
@@ -57,7 +57,7 @@ function LearningStyleQuiz() {
         alert('Please log in before submitting the quiz');
         return;
     }
-
+    
     // 处理答案选择的函数
     const handleAnswerChange = (value) => {
         const newAnswers = [...answers];
@@ -97,6 +97,7 @@ function LearningStyleQuiz() {
                     Authorization: `Bearer ${token}`,
                 },
             });
+            onFinish();
             // 然后从数据库中获取最新的学习风格分数
             const response = await axios.get(`http://localhost:8000/api/learning_style/${username}`, {
                 headers: {

@@ -18,7 +18,7 @@ function Login({ onLogin }) {
             localStorage.setItem('token', response.data.token);
             // 假设这是你的登录成功逻辑
             localStorage.setItem('username', response.data.username);
-            onLogin({ username });  // 假设用户名从登录请求的响应中返回
+            onLogin();  // 假设用户名从登录请求的响应中返
             navigate('/');
         } catch (error) {
             alert('登录失败');

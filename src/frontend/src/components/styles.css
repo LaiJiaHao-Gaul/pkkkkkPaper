@@ -1,0 +1,21 @@
+.container {
+    margin: 20px;
+    padding: 20px;
+    border: 1px solid #ccc;
+    height: 400px;
+    width: 600px;
+}
+
+.wrapper {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.scroll-box {
+    height: 400px; /* 或任何固定高度 */
+    overflow-y: auto; /* 启用垂直滚动 */
+    padding: 16px;
+    border: 1px solid #ccc;
+    margin-top: 20px;
+}
