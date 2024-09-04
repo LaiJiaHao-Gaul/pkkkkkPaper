@@ -139,8 +139,7 @@ exports.getWeight = async (req, res) => {
             `SELECT visual_weight, auditory_weight, kinesthetic_weight, interaction_time
              FROM UserInteractionWeights
              WHERE user_id = ?
-             ORDER BY interaction_time DESC
-             LIMIT 10`, [id]
+             ORDER BY interaction_time DESC`, [id]
         );
         console.log('rows===>', rows)
         let transformed = [];

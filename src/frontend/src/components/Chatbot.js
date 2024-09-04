@@ -3,6 +3,7 @@ import axios from 'axios';
 import { Line } from '@ant-design/charts';
 import './styles.css';
 
+import Markdown from 'react-markdown'
 function Chatbot() {
   const [questionInput, setQuestionInput] = useState('');
   const [question, setQuestion] = useState('');
@@ -42,7 +43,6 @@ function Chatbot() {
     } catch (error) {
       console.error('Error:', error);
     }
-
   }
   const handleAskQuestion = async () => {
     try {
@@ -59,14 +59,14 @@ function Chatbot() {
         body: JSON.stringify({
           messages: [...chatHistory, { role: 'user', content: question }]
           // question: [...chatHistory, { question: question}].toString(),
-
         })
       });
       await getUserWeightList();
 
       setChatHistory(prev => [...prev, {
         "role": "user",
-        "content": question
+        "content": question,
+        id: Date.now()
       }]);  // 提问时更新聊天历史
 
       // 检查响应是否是 ok
@@ -106,7 +106,7 @@ function Chatbot() {
           }
         });
       }
-      setChatHistory(prev => [...prev, { role: 'assistant', content: result }]);
+      setChatHistory(prev => [...prev, { role: 'assistant', content: result, id: Date.now() }]);
       setResponse('');
       setAsking(false);
       setIsDisabled(false);
@@ -114,7 +114,7 @@ function Chatbot() {
 
     } catch (error) {
       console.error('Error:', error);
-      setChatHistory(prev => [...prev, { question: question, content: 'Failed to fetch response' }]);  // 出错时更新聊天历史
+      setChatHistory(prev => [...prev, { question: question, content: 'Failed to fetch response', id: Date.now() }]);  // 出错时更新聊天历史
 
     }
   };
@@ -140,7 +140,7 @@ function Chatbot() {
     });
     setChatHistory(prev => [...prev, {
       "role": "user",
-      "content": question,
+      "content": question, id: Date.now()
     }]);  // 提问时更新聊天历史
 
     // 检查响应是否是 ok
@@ -180,19 +180,18 @@ function Chatbot() {
         }
       });
     }
-    setChatHistory(prev => [...prev, { role: 'assistant', content: result }]);
+    setChatHistory(prev => [...prev, { role: 'assistant', content: result, id: Date.now() }]);
     setResponse('');
     setAsking(false);
     setIsDisabled(false);
     console.log('Complete response:', result);
   }
-
   return (
     <div>
       <div className='scroll-box'>
         {chatHistory.map((chat, index) => (
-          <div key={index}>
-            <strong>{chat.role}:</strong> {chat.content}
+          <div key={chat.id}>
+            <strong>{chat.role}:</strong><Markdown>{chat.content}</Markdown>
             <br />
             {chat.role === 'assistant' && (
               <div>

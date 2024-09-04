@@ -5,8 +5,21 @@ import { Link } from 'react-router-dom'; // 用于跳转主页的链接
 // 问题和选项数组
 const questions = [
     "You are helping someone who wants to go to your airport, town centre or railway station. You would:",
-    "You are not sure whether a word should be spelled `dependent' or `dependant'. You would:",
+    "You are not sure whether a word should be spelled 'dependent' or 'dependant'. You would:",
     "You are planning a holiday for a group. You want some feedback from them about the plan. You would:",
+    "You are going to cook something as a special treat for your family. You would:",
+    "A group of tourists want to learn about the parks or nature reserves in your area. You would:",
+    "You are about to purchase a digital camera or mobile phone. Other than price, what would most influence your decision?",
+    "Remember a time when you learned how to do something new. Try to avoid choosing a physical skill, e.g. riding a bike. You learned best by:",
+    "You have a problem with your knee. You would prefer that the doctor:",
+    "You want to learn a new programme, skill or game on a computer. You would:",
+    "I like websites that have:",
+    "Other than price, what would most influence your decision to buy a new non-fiction book?",
+    "You are using a book, DVD or website to learn how to take photos with your new digital camera. You would like to have:",
+    "Do you prefer a trainer or a presenter who uses:",
+    "You have finished a competition or test and would like some feedback. You would like to have feedback:",
+    "You are going to choose food at a restaurant or cafe. You would:",
+    "You have to make an important speech at a conference or special occasion. You would:"
 ];
 
 const options = [
