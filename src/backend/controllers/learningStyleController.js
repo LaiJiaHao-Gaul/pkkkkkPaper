@@ -1,11 +1,11 @@
-const db = require('../db/db'); // 假设你已经配置好数据库连接
+const db = require('../db/db');
 require('dotenv').config();
 const { decodeJWT } = require('../utils/jwt');
 
-// 保存学习风格
+// Preserving learning style
 exports.saveLearningStyle = async (req, res) => {
     try {
-        let { visual_score, aural_score, read_write_score, kinaesthetic_score } = req.body;//从请求中获取学习风格数据
+        let { visual_score, aural_score, read_write_score, kinaesthetic_score } = req.body;
         const token = req.headers.authorization.split(' ')[1];
 
         const user = decodeJWT(token);
@@ -32,15 +32,13 @@ exports.saveLearningStyle = async (req, res) => {
 };
 
 
-// 获取调查问卷学习风格
+// Obtain a questionnaire learning style
 exports.getLearningStyle = async (req, res) => {
     const token = req.headers.authorization.split(' ')[1];
 
     const user = decodeJWT(token);
     let id = user.user_id;
     let LearningStyles = await db.query('SELECT visual_weight, auditory_weight, kinesthetic_weight FROM UserInteractionWeights WHERE user_id = ?', [id]);
-    console.log('res.json(LearningStyles[0][0]):', LearningStyles[0][0]);
     res.json(LearningStyles[0][0]);
 };
 
-//获取总体学习风格

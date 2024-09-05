@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import ProgressBar from './ProgressBar'; // 引入进度条组件
-import { Link } from 'react-router-dom'; // 用于跳转主页的链接
-// 问题和选项数组
+import ProgressBar from './ProgressBar';
+import { Link } from 'react-router-dom';
+
 const questions = [
     "You are helping someone who wants to go to your airport, town centre or railway station. You would:",
     "You are not sure whether a word should be spelled 'dependent' or 'dependant'. You would:",
@@ -40,7 +40,6 @@ const options = [
     ["a. choose something that you have had there before.", "b. listen to the waiter or ask friends to recommend choices.", "c. choose from the descriptions in the menu.", "d. look at what others are eating or look at pictures of each dish."],
     ["a. make diagrams or get graphs to help explain things.", "b. write a few key words and practice saying your speech over and over.", "c. write out your speech and learn from reading it over several times.", "d. gather many examples and stories to make the talk real and practical."]
 ];
-// 对应每个问题的评分规则
 const scoring = [
     { a: 'K', b: 'A', c: 'R', d: 'V' },
     { a: 'V', b: 'A', c: 'R', d: 'K' },
@@ -60,25 +59,23 @@ const scoring = [
     { a: 'V', b: 'A', c: 'R', d: 'K' }
 ];
 
-function LearningStyleQuiz({onFinish}) {
-    const [currentQuestion, setCurrentQuestion] = useState(0); // 当前显示的问题索引
-    const [answers, setAnswers] = useState([]); // 存储用户的答案
-    const [scores, setScores] = useState(null); // 存储计算后的学习风格分数
-    const username = localStorage.getItem('username'); // 从 localStorage 获取 username
+function LearningStyleQuiz({ onFinish }) {
+    const [currentQuestion, setCurrentQuestion] = useState(0);
+    const [answers, setAnswers] = useState([]);
+    const [scores, setScores] = useState(null);
+    const username = localStorage.getItem('username');
     if (!username) {
         console.error('No username found in localStorage');
         alert('Please log in before submitting the quiz');
         return;
     }
-    
-    // 处理答案选择的函数
+
     const handleAnswerChange = (value) => {
         const newAnswers = [...answers];
-        newAnswers[currentQuestion] = value; // 这里直接存储 'a', 'b', 'c', 'd'
+        newAnswers[currentQuestion] = value;
         setAnswers(newAnswers);
     };
 
-    // 提交问卷并计算结果
     const handleSubmitQuiz = async () => {
         const token = localStorage.getItem('token');
         const newScores = { V: 0, A: 0, R: 0, K: 0 };
@@ -104,21 +101,20 @@ function LearningStyleQuiz({onFinish}) {
                 aural_score: newScores.A,
                 read_write_score: newScores.R,
                 kinaesthetic_score: newScores.K,
-                answers: answers // 这里传输的是字母数组
+                answers: answers
             }, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
             });
             onFinish();
-            // 然后从数据库中获取最新的学习风格分数
             const response = await axios.get(`http://localhost:8000/api/learning_style/${username}`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
             });
             console.log('response.data:', response.data);
-            // 设置最新的学习风格分数到状态
+            // Set the latest learning style score to the status
             setScores(response.data);
 
             alert('Learning style saved and updated!');
@@ -130,41 +126,39 @@ function LearningStyleQuiz({onFinish}) {
     };
 
 
-    // 处理下一问题
     const nextQuestion = () => {
         if (currentQuestion < questions.length - 1) {
             setCurrentQuestion(currentQuestion + 1);
         }
     };
 
-    // 处理上一问题
     const prevQuestion = () => {
         if (currentQuestion > 0) {
             setCurrentQuestion(currentQuestion - 1);
         }
     };
 
-    // 根据学习风格分数显示相关说明
+    // Displays instructions based on learning style scores
     const renderLearningStyleDescription = () => {
         if (!scores) return null;
 
         const descriptions = [];
         if (scores.visual_score >= 3) {
-            descriptions.push("你更擅长通过视觉学习...");
+            descriptions.push("You're better at learning visually...");
         }
         if (scores.aural_score >= 3) {
-            descriptions.push("你更擅长通过语音学习...");
+            descriptions.push("You're better at learning through speech...");
         }
         if (scores.read_write_score >= 3) {
-            descriptions.push("你更擅长通过阅读/写作学习...");
+            descriptions.push("You're better at learning by reading/writing...");
         }
         if (scores.kinaesthetic_score >= 3) {
-            descriptions.push("你更擅长通过动觉学习...");
+            descriptions.push("You're better at kinesthetic learning...");
         }
 
         return (
             <div>
-                <h3>你的学习风格：</h3>
+                <h3>Your Learning style:</h3>
                 <p>Visual: {scores.visual_weight}</p>
                 <p>Aural: {scores.auditory_weight}</p>
                 <p>Kinaesthetic: {scores.kinesthetic_weight}</p>
@@ -179,11 +173,11 @@ function LearningStyleQuiz({onFinish}) {
 
     return (
         <div>
-            <h2>学习风格问卷</h2>
-            <ProgressBar current={currentQuestion + 1} total={questions.length} /> {/* 显示当前进度 */}
+            <h2>Learning style questionnaire</h2>
+            <ProgressBar current={currentQuestion + 1} total={questions.length} />
 
             {scores ? (
-                renderLearningStyleDescription() // 显示学习风格结果
+                renderLearningStyleDescription()
             ) : (
                 <>
                     <div key={currentQuestion}>
@@ -208,7 +202,7 @@ function LearningStyleQuiz({onFinish}) {
                 </>
             )}
 
-            <Link to="/">Homepage</Link> {/* 返回首页的链接 */}
+            <Link to="/">Homepage</Link>
         </div>
     );
 }

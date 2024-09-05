@@ -15,7 +15,7 @@ function App() {
     useEffect(() => {
         const token = localStorage.getItem('token');
         if (token) {
-            // 使用 token 获取用户信息（此处假设有一个 API 来获取用户信息）
+
             axios.get('http://localhost:8000/api/users/me', {
                 headers: {
                     Authorization: `Bearer ${token}`,
@@ -34,8 +34,6 @@ function App() {
                 Authorization: `Bearer ${token}`,
             },
         }).then(response => {
-            console.log('response.data.user',response.data.user)
-            // navigate('/');  // 导航到根路径
             setUser(response.data.user);
         }).catch(() => {
             localStorage.removeItem('token');
@@ -52,7 +50,7 @@ function App() {
                 <main style={{ padding: '20px' }}>
                     <Routes>
                         <Route path="/" element={<Chatbot />} />
-                        <Route path="/quiz" element={<LearningStyleQuiz onFinish={handleRefreshUserInfo}/>} />
+                        <Route path="/quiz" element={<LearningStyleQuiz onFinish={handleRefreshUserInfo} />} />
                         <Route path="/login" element={<Login onLogin={handleRefreshUserInfo} />} />
                         <Route path="/register" element={<Register />} />
                     </Routes>

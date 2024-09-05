@@ -16,29 +16,28 @@ function Login({ onLogin }) {
             });
             alert(response.data.message);
             localStorage.setItem('token', response.data.token);
-            // 假设这是你的登录成功逻辑
             localStorage.setItem('username', response.data.username);
-            onLogin();  // 假设用户名从登录请求的响应中返
+            onLogin();
             navigate('/');
         } catch (error) {
-            alert('登录失败');
+            alert('Login failure');
             console.error('Error logging in:', error);
         }
     };
 
     return (
         <div>
-            <h2>登录</h2>
+            <h2>Login</h2>
             <form onSubmit={handleLogin}>
                 <div>
-                    <label>用户名:</label>
+                    <label>username:</label>
                     <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} required />
                 </div>
                 <div>
-                    <label>密码:</label>
+                    <label>password:</label>
                     <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
                 </div>
-                <button type="submit">登录</button>
+                <button type="submit">login</button>
             </form>
         </div>
     );

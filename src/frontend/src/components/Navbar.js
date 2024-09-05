@@ -14,20 +14,19 @@ function Navbar({ user, onLogout }) {
     };
 
     useEffect(() => {
-        // 在这里调用你想在页面加载时执行的方法
         setShowQuiz(user && !user.finished_survey)
     }, [user]);
     return (
         <nav style={{ display: 'flex', justifyContent: 'space-between', padding: '10px', background: '#eee' }}>
             <div>
                 <li><Link to="/">Home page</Link></li>
-                {showQuiz&& <li><Link to="/quiz">Know your learning style</Link></li>}
+                {showQuiz && <li><Link to="/quiz">Know your learning style</Link></li>}
             </div>
             <div>
                 {user ? (
                     <>
-                        <span>欢迎, {user.username}</span>
-                        <button onClick={handleLogout}>登出</button>
+                        <span>Welcome, {user.username}</span>
+                        <button onClick={handleLogout}>Log out</button>
                     </>
                 ) : (
                     <>

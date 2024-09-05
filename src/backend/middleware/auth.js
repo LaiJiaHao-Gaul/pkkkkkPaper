@@ -17,7 +17,7 @@ const authMiddleware = async (req, res, next) => {
         req.user = user[0];
         next();
     } catch (error) {
-        res.status(401).send({ message: '身份验证失败' });
+        res.status(401).send({ message: 'Authentication failure' });
     }
 };
 

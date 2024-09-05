@@ -1,4 +1,4 @@
-const db = require('../db/db'); // 假设你已经配置好数据库连接
+const db = require('../db/db');
 const axios = require('axios');
 const { decodeJWT } = require('../utils/jwt');
 require('dotenv').config();
@@ -6,30 +6,15 @@ require('dotenv').config();
 
 // 处理用户提问
 exports.postQuestion = async (req, res) => {
-    // res.json({ok:true})
-
     const messages = req.body.messages;
     const Questions = messages.filter(message => message.role === 'user');
     const lastQuestions = Questions[Questions.length - 1].content;
-    console.log('lastQuestions', lastQuestions);
-
-
     try {
-        // 模拟请求学习风格分类模型
         const styleResponse = await axios.post('http://localhost:5001/predict_style', { question: lastQuestions });
-        const currentStyleScores = styleResponse.data;//问题本身的风格分数
-        //从req中取得token并使用decodeJWT解析
+        const currentStyleScores = styleResponse.data;
         const token = req.headers.authorization.split(' ')[1];
         const user = decodeJWT(token);
         let id = user.user_id;
-        //问卷权重
-        let history_weight = await db.query('SELECT visual_weight, auditory_weight, kinesthetic_weight FROM UserInteractionWeights WHERE user_id = ?', [id]);
-
-
-
-        console.log('history_weight===>', history_weight[0][history_weight[0].length - 1])
-        console.log('currentStyleScores===>', currentStyleScores)
-        //插入交互记录
         await insertUserInteraction(id, lastQuestions, currentStyleScores.Visual, currentStyleScores.Auditory, currentStyleScores.Kinesthetic)
         let { visual_weight, auditory_weight, kinesthetic_weight } = await changeUserInteractionWeight(id);
         Questions.unshift({
@@ -38,7 +23,6 @@ exports.postQuestion = async (req, res) => {
         })
         const data = {
             model: "llama3.1",
-            // prompt: question
             messages,
         };
 
@@ -51,12 +35,10 @@ exports.postQuestion = async (req, res) => {
             .then(response => {
                 res.setHeader('Content-Type', 'application/json');
                 response.data.on('data', (chunk) => {
-                    // console.log('Received chunk:', chunk.toString());
                     res.write(chunk);
                 });
                 response.data.on('end', () => {
                     res.end();
-                    console.log('No more data in response.');
                 });
             })
             .catch(error => {
@@ -72,9 +54,6 @@ exports.postFeedback = async (req, res) => {
     const { feedback, question, answer, chatHistory } = req.body;
     const token = req.headers.authorization.split(' ')[1];
     const user = decodeJWT(token);
-    console.log('feedback=>>>', feedback)
-    console.log('question=>>>', question)
-    console.log('answer=>>>', answer)
     const data = {
         model: "llama3.1",
         messages: [
@@ -120,7 +99,6 @@ exports.postFeedback = async (req, res) => {
             });
             response.data.on('end', () => {
                 res.end();
-                console.log('No more data in response.');
             });
         })
         .catch(error => {
@@ -128,54 +106,50 @@ exports.postFeedback = async (req, res) => {
         });
 }
 
+//Get records of user weights for chart display
 exports.getWeight = async (req, res) => {
     try {
         const token = req.headers.authorization.split(' ')[1];
         const user = decodeJWT(token);
         let id = user.user_id;
-        //限制十条
-
         const [rows] = await db.query(
             `SELECT visual_weight, auditory_weight, kinesthetic_weight, interaction_time
              FROM UserInteractionWeights
              WHERE user_id = ?
              ORDER BY interaction_time DESC`, [id]
         );
-        console.log('rows===>', rows)
         let transformed = [];
+        let index = 1;
 
-        // 遍历原始数据数组
+        // Iterate over the raw data array
         rows.forEach(item => {
-            // 格式化时间，只保留日期部分
-            const date = new Date(item.interaction_time);
-            const month = (date.getMonth() + 1).toString().padStart(2, '0'); // 月份从0开始，所以加1
-            const day = date.getDate().toString().padStart(2, '0');
-            const formattedDate = `${month}-${day}`;
-
-            // 为每个权重类型创建一个新的对象，并加入到转换后的数组中
+            // Format the time, keeping only the date part
+            index++;
             transformed.push({
-                time: date,
+                time: index,
                 value: item.visual_weight,
                 category: 'visual_weight'
             });
             transformed.push({
-                time: date,
+                time: index,
                 value: item.auditory_weight,
                 category: 'auditory_weight'
             });
             transformed.push({
-                time: date,
+                time: index,
                 value: item.kinesthetic_weight,
                 category: 'kinesthetic_weight'
             });
         });
         res.json({ weightList: transformed.reverse() });
-    }catch(err){
+    } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Something went wrong.' });
     }
-    
+
 }
+
+//The smoothed window algorithm is used to calculate the new user learning style
 async function changeUserInteractionWeight(id) {
     let windowsInteractions = await get10Interactions(id);
     let { visual_weight, auditory_weight, kinesthetic_weight } = await getHistoryWeight(id);
@@ -186,16 +160,14 @@ async function changeUserInteractionWeight(id) {
     return { visual_weight, auditory_weight, kinesthetic_weight }
 }
 
-//插入一条交互记录
+//Insert an interaction record
 async function insertUserInteraction(userId, interaction, Visual, Auditory, Kinesthetic) {
     var values = calculatePercentages([Visual, Auditory, Kinesthetic]);
-    console.log('values===>', values)
     await db.query('INSERT INTO UserInteractions (user_id, interaction, visual_score, aural_score, kinaesthetic_score) VALUES (?, ?, ?, ?, ?)', [userId, interaction, ...values],
         (error, results, fields) => {
             if (error) {
                 return console.error(error.message);
             }
-            console.log('Inserted Row Id:', results.insertId);
         }
     );
 }

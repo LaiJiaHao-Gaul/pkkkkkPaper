@@ -17,34 +17,34 @@ function Register() {
                 email
             });
             alert(response.data.message);
-            navigate('/login'); // 注册成功后跳转到登录页面
+            navigate('/login');
         } catch (error) {
             console.error('Error registering user:', error);
             if (error.response && error.response.data) {
-                alert(`注册失败: ${error.response.data.message}`);
+                alert(`Registration failure: ${error.response.data.message}`);
             } else {
-                alert('注册失败');
+                alert('Registration failure');
             }
         }
     };
 
     return (
         <div>
-            <h2>注册</h2>
+            <h2>Sign in</h2>
             <form onSubmit={handleRegister}>
                 <div>
-                    <label>用户名:</label>
+                    <label>User Name:</label>
                     <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} required />
                 </div>
                 <div>
-                    <label>密码:</label>
+                    <label>Password:</label>
                     <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
                 </div>
                 <div>
-                    <label>邮箱:</label>
+                    <label>Email:</label>
                     <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
                 </div>
-                <button type="submit">注册</button>
+                <button type="submit">Sign in</button>
             </form>
         </div>
     );
