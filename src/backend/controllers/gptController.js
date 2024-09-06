@@ -11,7 +11,9 @@ exports.postQuestion = async (req, res) => {
     const lastQuestions = Questions[Questions.length - 1].content;
     try {
         const styleResponse = await axios.post('http://localhost:5001/predict_style', { question: lastQuestions });
-        const currentStyleScores = styleResponse.data;
+        console.log('styleResponse', styleResponse.data.emotion_scores)
+        const currentStyleScores = styleResponse.data.style_scores;
+        const emotion = styleResponse.data.emotion_scores;
         const token = req.headers.authorization.split(' ')[1];
         const user = decodeJWT(token);
         let id = user.user_id;
@@ -19,7 +21,7 @@ exports.postQuestion = async (req, res) => {
         let { visual_weight, auditory_weight, kinesthetic_weight } = await changeUserInteractionWeight(id);
         Questions.unshift({
             role: 'user',
-            content: `i am a ${visual_weight * 100}% visual learner, ${auditory_weight * 100}% auditory learner, ${kinesthetic_weight * 100}% kinesthetic learner,Please adjust the proportion of your responses according to my learning style`
+            content: `i am a ${visual_weight * 100}% visual learner, ${auditory_weight * 100}% auditory learner, ${kinesthetic_weight * 100}% kinesthetic learner,Please adjust the proportion of your responses according to my learning style, and i feel ${emotion} now.`
         })
         const data = {
             model: "llama3.1",
@@ -148,7 +150,6 @@ exports.getWeight = async (req, res) => {
     }
 
 }
-
 //The smoothed window algorithm is used to calculate the new user learning style
 async function changeUserInteractionWeight(id) {
     let windowsInteractions = await get10Interactions(id);
